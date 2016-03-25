@@ -1,9 +1,8 @@
 package com.cterm2.frostyrod.item;
 
+import com.cterm2.frostyrod.FrostyRod;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.BlockState;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
@@ -30,8 +29,7 @@ public class ItemFrostyRod extends Item
 	public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, BlockPos pos,
 	                         EnumFacing side, float hitX, float hitY, float hitZ)
 	{
-		if(world.isRemote) return true;
-		else
+		if(!world.isRemote)
 		{
 			// Actual processing only in server
 			IBlockState blockState = world.getBlockState(pos);
@@ -44,16 +42,23 @@ public class ItemFrostyRod extends Item
 					this.freeze((EntityPlayerMP)player, world, pos);
 				}
 			}
-			return true;
 		}
+		return true;
 	}
+
+	// Costs of this magic
+	private static final int CostExperience = 1;
 
 	// Freeze block
 	private void freeze(EntityPlayerMP player, World world, BlockPos pos)
 	{
+		if(!player.capabilities.isCreativeMode && player.experienceLevel < CostExperience) return;
+
+		// Use magic with decreasing experience
+		if(!player.capabilities.isCreativeMode) player.removeExperienceLevel(CostExperience);
 		// Because executed in server, tell to client to spawn particles
 		player.playerNetServerHandler.sendPacket(new S2APacketParticles(EnumParticleTypes.EXPLOSION_NORMAL, true,
-				pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f, 0.0f, 0.0f, 0.0f, 0.1f, 20, new int[0]));
+				pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f, 0.0f, 0.0f, 0.0f, 0.1f, 20));
 		// Place ice block with notifying
 		world.setBlockState(pos, Blocks.ice.getDefaultState(), 3);
 	}
